@@ -1,6 +1,9 @@
 from wcferry import Wcf, WxMsg
+
 from queue import Empty
 from threading import Thread
+from datetime import datetime
+
 
 # 创建Wcf类的实例，用于与微信通信
 wcf = Wcf()
@@ -8,9 +11,6 @@ print(wcf.is_login())  # 打印是否已经登录
 print(wcf.get_user_info())  # 打印登录信息
 
 contacts = wcf.get_contacts()  # 获取通讯录信息
-
-# for contact in contacts:  # 遍历通讯录中的所有联系人
-#     print(contact)  # 打印联系人信息
 
 def send_text_message(msg: str, receiver: str, aters: str = '') -> int:
     """
@@ -45,9 +45,13 @@ def processMsg(msg: WxMsg):
                 break
 
         # 示例：发送回复消息
-        send_text_message("这是自动回复的消息\n机器人源码请查看天明的GitHub仓库：https://github.com/ztm0929/Personal-WeChat-Bot", room_id, "")
-        print(wcf.get_alias_in_chatroom('', room_id))
+        send_text_message(f"这是自动回复的消息\n机器人源码请查看天明的GitHub仓库：https://github.com/ztm0929/Personal-WeChat-Bot\n@{msg.sender} ", room_id, msg.sender)
         print(f"来自群聊 {room_name} 的消息：{msg.content}")
+        print(f"消息ID：{msg.id},消息发送人：{msg.sender}")
+
+        # 将获取到的消息存入logs目录下的csv文件中，如果已有同名文件则追加，字段分别为：消息ID，消息发送人，捕获到消息的时间（格式为hh:mm）消息内容
+        with open(f"logs/chat_logs/{datetime.now().strftime('%Y-%m-%d')}.csv", "a", encoding='utf-8') as f:
+            f.write(f"{msg.id},{msg.sender},{datetime.now().strftime('%H:%M:%S')},{msg.content}\n")
 
 def enableReceivingMsg():
     """
