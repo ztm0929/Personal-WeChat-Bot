@@ -128,6 +128,7 @@ ENV/
 env.bak/
 venv.bak/
 .vscode/
+cspell.json
 
 # Spyder project settings
 .spyderproject
@@ -162,3 +163,4 @@ cython_debug/
 
 
 .wcf.lock
+logs/

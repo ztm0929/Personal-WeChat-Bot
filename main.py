@@ -1,10 +1,30 @@
-from wcferry import Wcf, WxMsg  # 从wcferry库中导入Wcf和WxMsg类
-from queue import Empty  # 从queue库中导入Empty异常，用于处理消息队列为空的情况
-from threading import Thread  # 从threading库中导入Thread类，用于创建线程
+from wcferry import Wcf, WxMsg
+from queue import Empty
+from threading import Thread
 
-wcf = Wcf()  # 创建Wcf类的实例，用于与微信通信
+# 创建Wcf类的实例，用于与微信通信
+wcf = Wcf()
 print(wcf.is_login())  # 打印是否已经登录
 print(wcf.get_user_info())  # 打印登录信息
+
+contacts = wcf.get_contacts()  # 获取通讯录信息
+
+# for contact in contacts:  # 遍历通讯录中的所有联系人
+#     print(contact)  # 打印联系人信息
+
+def send_text_message(msg: str, receiver: str, aters: str = '') -> int:
+    """
+    发送文本消息
+
+    参数:
+    msg (str): 要发送的消息，换行使用 \n （单杠）；如果 @ 人的话，需要带上跟 aters 里数量相同的 @
+    receiver (str): 消息接收人，wxid 或者 roomid
+    aters (str): 要 @ 的 wxid，多个用逗号分隔；@所有人 只需要 notify@all
+
+    返回:
+    int: 0 为成功，其他失败
+    """
+    return wcf.send_text(msg, receiver, aters)
 
 def processMsg(msg: WxMsg):
     """
@@ -14,24 +34,20 @@ def processMsg(msg: WxMsg):
     msg (WxMsg): 接收到的微信消息对象
     """
     if msg.from_group():  # 判断消息是否来自群聊
-        print(f"来自群{msg.from_group()}的消息: {msg.content}")  # 打印群聊消息内容
+
+        room_id = msg.roomid
+        room_name = "未知群聊"
+
+        # 将room_id加上@chatroom后缀，对比contacts列表中的wxid，取得name
+        for contact in contacts:
+            if contact['wxid'] == room_id:
+                room_name = contact['name']
+                break
 
         # 示例：发送回复消息
-        # wcf.send_text_message("这是自动回复的消息", msg.from_group(), "")
-
-# def send_text_message(msg: str, receiver: str, aters: str = '') -> int:
-#     """
-#     发送文本消息
-
-#     参数:
-#     msg (str): 要发送的消息，换行使用 \n （单杠）；如果 @ 人的话，需要带上跟 aters 里数量相同的 @
-#     receiver (str): 消息接收人，wxid 或者 roomid
-#     aters (str): 要 @ 的 wxid，多个用逗号分隔；@所有人 只需要 notify@all
-
-#     返回:
-#     int: 0 为成功，其他失败
-#     """
-#     return wcf.send_text(msg, receiver, aters)
+        send_text_message("这是自动回复的消息\n机器人源码请查看天明的GitHub仓库：https://github.com/ztm0929/Personal-WeChat-Bot", room_id, "")
+        print(wcf.get_alias_in_chatroom('', room_id))
+        print(f"来自群聊 {room_name} 的消息：{msg.content}")
 
 def enableReceivingMsg():
     """
@@ -53,11 +69,8 @@ def enableReceivingMsg():
     wcf.enable_receiving_msg()  # 启用Wcf实例的消息接收功能
     Thread(target=innerWcFerryProcessMsg, name="ListenMessageThread", daemon=True).start()  # 启动一个后台线程来处理消息
 
-enableReceivingMsg()  # 启用消息接收功能并启动消息处理线程
+# 启用消息接收功能并启动消息处理线程
+enableReceivingMsg()
 
-wcf.keep_running()  # 保持Wcf实例的运行状态，使其持续接收消息
-
-
-
-
-
+# 保持Wcf实例的运行状态，使其持续接收消息
+wcf.keep_running()
