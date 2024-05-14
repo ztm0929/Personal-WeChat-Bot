@@ -3,6 +3,8 @@ from queue import Empty  # 从queue库中导入Empty异常，用于处理消息�
 from threading import Thread  # 从threading库中导入Thread类，用于创建线程
 
 wcf = Wcf()  # 创建Wcf类的实例，用于与微信通信
+print(wcf.is_login())  # 打印是否已经登录
+print(wcf.get_user_info())  # 打印登录信息
 
 def processMsg(msg: WxMsg):
     """
@@ -13,6 +15,23 @@ def processMsg(msg: WxMsg):
     """
     if msg.from_group():  # 判断消息是否来自群聊
         print(f"来自群{msg.from_group()}的消息: {msg.content}")  # 打印群聊消息内容
+
+        # 示例：发送回复消息
+        # wcf.send_text_message("这是自动回复的消息", msg.from_group(), "")
+
+# def send_text_message(msg: str, receiver: str, aters: str = '') -> int:
+#     """
+#     发送文本消息
+
+#     参数:
+#     msg (str): 要发送的消息，换行使用 \n （单杠）；如果 @ 人的话，需要带上跟 aters 里数量相同的 @
+#     receiver (str): 消息接收人，wxid 或者 roomid
+#     aters (str): 要 @ 的 wxid，多个用逗号分隔；@所有人 只需要 notify@all
+
+#     返回:
+#     int: 0 为成功，其他失败
+#     """
+#     return wcf.send_text(msg, receiver, aters)
 
 def enableReceivingMsg():
     """
