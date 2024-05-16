@@ -59,8 +59,13 @@ def processMsg(msg: WxMsg):
         write_message_log(room_name, room_id, msg)
         
         if msg.is_at(wcf.get_user_info()['wxid']):
-            send_text_message(f"这是自动回复的消息\n机器人源码请查看天明的GitHub仓库：https://github.com/ztm0929/Personal-WeChat-Bot\n@{msg.sender} ", room_id, msg.sender)
-
+            sender_name = wcf.get_alias_in_chatroom(msg.sender, room_id)
+            send_text_message(
+                msg=f"@{sender_name}\n\nHi~这是自动回复的消息\n机器人源码请查看天明的GitHub仓库：https://github.com/ztm0929/Personal-WeChat-Bot", 
+                receiver=room_id, 
+                aters=msg.sender
+            )
+            
 def enableReceivingMsg():
     """
     启用消息接收功能并启动一个新线程来处理接收到的消息。

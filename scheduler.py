@@ -9,8 +9,8 @@ def schedule_messages(send_message_func):
     """
     schedule.every().day.at("08:00").do(send_message_func, "这是定时发送的消息", "wxid_92woynyarvut21", '')
     schedule.every().day.at("08:45").do(send_message_func, "[Sun]GM", "47462575642@chatroom", '')
-    schedule.every().day.at("05:00").do(send_message_func, "[Sun]这是定时发送的消息", "44227013304@chatroom", '')
-    schedule.every(10).seconds.do(send_message_func, "[Sun]这是定时发送的消息", "44227013304@chatroom", '')
+    schedule.every().day.at("22:45").do(send_message_func, "[Moon]GN", "47462575642@chatroom", '')
+
 
     while True:
         try:
