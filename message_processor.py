@@ -5,6 +5,7 @@ from wcferry import WxMsg, Wcf
 from datetime import datetime
 import os
 import logging
+import requests
 
 # 配置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -43,15 +44,6 @@ def write_message_log(room_name, room_id, msg):
     with open(log_file, "a", encoding='utf-8') as f:
         f.write(f"{msg.id},{msg.sender},{datetime.now().strftime('%H:%M:%S')},{msg.content}\n")
 
-async def async_request_and_respond(receive: str):
-    """
-    异步发送HTTP请求并将响应结果作为消息发送出去
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get('http://127.0.0.1:5000/repositories') as response:
-            result = await response.text()
-            send_text_message(msg=result, receiver=receive)
-
 def processMsg(msg: WxMsg):
     """
     处理微信消息的函数。如果消息来自群聊，打印消息内容。
@@ -71,7 +63,13 @@ def processMsg(msg: WxMsg):
                 receiver=room_id,
                 aters=msg.sender
             )
-            asyncio.run(async_request_and_respond(receive=room_id))
+            if "查询" in msg.content:
+                send_text_message(
+                    msg=requests.get('http://127.0.0.1:5000/repositories').json()[0]['url'],
+                    receiver=room_id,
+                    aters=msg.sender
+                )
+                print(requests.get('http://127.0.0.1:5000/repositories').json()[0]['url'])
 
 def start_scheduler():
     import scheduler
