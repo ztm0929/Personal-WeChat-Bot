@@ -1,5 +1,3 @@
-import json
-
 import requests
 
 from models import coinData as coin
@@ -9,9 +7,7 @@ baseUrl = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currenci
 
 def getCoinData():
     res = requests.get(baseUrl)
-    coinJsonData = res.json()
-
-    coinData = json.loads(coinJsonData)
+    coinData = res.json()
     return coin.CoinData(coinData["bitcoin"]["cny"], coinData["bitcoin"]["last_updated_at"])
 
 # Todo: 1:未进行任何错误处理
