@@ -2,6 +2,18 @@ import schedule
 import time
 import logging
 from threading import Thread
+import requests
+
+def get_bitcoin_price():
+    url = (
+        'https://api.coingecko.com/api/v3/simple/price'
+        '?ids=bitcoin'
+        '&vs_currencies=cny'
+        '&include_last_updated_at=true'
+        )
+
+    res = requests.get(url)
+    return res.text
 
 def schedule_messages(send_message_func):
     """

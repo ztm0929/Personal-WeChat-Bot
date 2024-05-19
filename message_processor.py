@@ -56,20 +56,26 @@ def processMsg(msg: WxMsg):
 
         write_message_log(room_name, room_id, msg)
         
-        if msg.is_at(wcf.get_user_info()['wxid']):
-            sender_name = wcf.get_alias_in_chatroom(msg.sender, room_id)
-            send_text_message(
-                msg=f"@{sender_name}\n\n请稍候，我正在查询...",
-                receiver=room_id,
-                aters=msg.sender
-            )
-            if "查询" in msg.content:
-                send_text_message(
-                    msg=requests.get('http://127.0.0.1:5000/repositories').json()[0]['url'],
-                    receiver=room_id,
-                    aters=msg.sender
-                )
-                print(requests.get('http://127.0.0.1:5000/repositories').json()[0]['url'])
+        # if msg.is_at(wcf.get_user_info()['wxid']):
+        #     sender_name = wcf.get_alias_in_chatroom(msg.sender, room_id)
+        #     send_text_message(
+        #         msg=f"@{sender_name}\n\n请稍候，我正在查询...",
+        #         receiver=room_id,
+        #         aters=msg.sender
+        #     )
+        #     if "查询" in msg.content:
+        #         try:
+        #             response = requests.get('http://127.0.0.1:5000/repositories')
+        #             response.raise_for_status()
+        #             url = response.json()[0]['url']
+        #             send_text_message(
+        #                 msg=url,
+        #                 receiver=room_id,
+        #                 aters=msg.sender
+        #             )
+        #             print(url)
+        #         except requests.exceptions.RequestException as e:
+        #             logging.error(f"请求失败: {e}")
 
 def start_scheduler():
     import scheduler
