@@ -6,8 +6,20 @@ import requests
 import datetime
 from dotenv import load_dotenv
 import os
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 load_dotenv()
+
+# 设置重试策略
+retry_strategy = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[429, 500, 502, 503, 504]
+)
+adapter = HTTPAdapter(max_retries=retry_strategy)
+http = requests.Session()
+http.mount("https://", adapter)
 
 def get_bitcoin_price():
     url = (
@@ -15,9 +27,9 @@ def get_bitcoin_price():
         '?ids=bitcoin'
         '&vs_currencies=cny'
         '&include_last_updated_at=true'
-        )
+    )
 
-    res = requests.get(url)
+    res = http.get(url)
     return res.text
 
 def get_coin_rank():
@@ -29,46 +41,58 @@ def get_coin_rank():
         '&page=1'
         '&locale=zh'
         '&price_change_percentage=1h%2C24h%2C7d'
-        )
+    )
     
     headers = {
         "accept": "application/json",
         "x-cg-demo-api-key": os.getenv("COINGECKO_API_KEY")
     }
 
-    res = requests.get(url, headers=headers).json()
-    # 将返回的列表循环取出，拼接成字符串
+    res = http.get(url, headers=headers).json()
+    
     formatted_res = []
     for i, coin in enumerate(res):
-        coin_info = f"#{i+1} {coin['name']} {coin['symbol'].upper()}\nCN¥{round(coin['current_price'], 2):,}\n1 Hours：{round(coin['price_change_percentage_1h_in_currency'], 2)}%\n24 Hours：{round(coin['price_change_percentage_24h_in_currency'], 2)}%\n7 Days：{round(coin['price_change_percentage_7d_in_currency'], 2)}%\n------"
-        last_updated = coin['last_updated']
-        last_updated = datetime.datetime.strptime(last_updated, "%Y-%m-%dT%H:%M:%S.%fZ")
-        last_updated = last_updated + datetime.timedelta(hours=8)
-        last_updated = last_updated.strftime("%Y-%m-%d %H:%M:%S")
+        coin_info = (
+            f"#{i+1} {coin['name']} {coin['symbol'].upper()}\n"
+            f"CN¥{round(coin['current_price'], 2):,}\n"
+            f"1 Hours：{round(coin['price_change_percentage_1h_in_currency'], 2)}%\n"
+            f"24 Hours：{round(coin['price_change_percentage_24h_in_currency'], 2)}%\n"
+            f"7 Days：{round(coin['price_change_percentage_7d_in_currency'], 2)}%\n"
+            f"------"
+        )
+        last_updated = datetime.datetime.strptime(coin['last_updated'], "%Y-%m-%dT%H:%M:%S.%fZ") + datetime.timedelta(hours=8)
         formatted_res.append(coin_info)
 
-    txt = f"""📈 Crypto市值排名：
-币种-当前汇率-涨跌
-{'\n'.join(formatted_res)}
-
-🕒 更新时间：
-{last_updated} UTC+8
-
-📊 Data from CoinGecko"""
+    last_updated_str = last_updated.strftime("%Y-%m-%d %H:%M:%S")
+    txt = (
+        f"📈 Crypto市值排名：\n"
+        f"币种-当前汇率-涨跌\n"
+        f"{'\n'.join(formatted_res)}\n\n"
+        f"🕒 更新时间：\n"
+        f"{last_updated_str} UTC+8\n\n"
+        f"📊 Data from CoinGecko"
+    )
     return txt
-
 
 def schedule_messages(send_message_func):
     """
     定时发送消息的函数
     """
-    schedule.every().day.at("08:00").do(send_message_func, "这是定时发送的消息", "wxid_92woynyarvut21", '')
-    schedule.every().day.at("04:07").do(send_message_func, get_coin_rank(), "wxid_92woynyarvut21", '')
-    schedule.every().day.at("08:45").do(send_message_func, "[Sun]GM", os.getenv("闲聊区@编程小白社"), '')
-    schedule.every().day.at("08:50").do(send_message_func, get_coin_rank(), os.getenv("闲聊区@编程小白社"), '')
-    schedule.every().day.at("22:45").do(send_message_func, "[Moon]GN", os.getenv("闲聊区@编程小白社"), '')
-
-
+    times = ["08:00", "19:15", "08:45", "08:50", "22:45"]
+    messages = [
+        ("这是定时发送的消息", "wxid_92woynyarvut21", ''),
+        (get_coin_rank, "wxid_92woynyarvut21", ''),
+        ("[Sun]GM", os.getenv("闲聊区@编程小白社"), ''),
+        (get_coin_rank, os.getenv("闲聊区@编程小白社"), ''),
+        ("[Moon]GN", os.getenv("闲聊区@编程小白社"), '')
+    ]
+    
+    for time_str, (message, chat_id, additional) in zip(times, messages):
+        if callable(message):
+            schedule.every().day.at(time_str).do(send_message_func, message(), chat_id, additional)
+        else:
+            schedule.every().day.at(time_str).do(send_message_func, message, chat_id, additional)
+    
     while True:
         try:
             schedule.run_pending()
@@ -76,7 +100,7 @@ def schedule_messages(send_message_func):
         except Exception as e:
             logging.error(f"程序运行时发生错误: {e}")
             logging.info("程序将在60秒后重试。")
-            time.sleep(60)  # 发生错误时等待60秒后重试
+            time.sleep(60)
 
 def start_scheduler(send_message_func):
     """
