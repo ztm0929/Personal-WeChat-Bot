@@ -78,7 +78,7 @@ def schedule_messages(send_message_func):
     """
     定时发送消息的函数
     """
-    times = ["08:00", "19:15", "08:45", "08:50", "22:45"]
+    times = ["08:00", "16:56", "08:45", "08:50", "22:45"]
     messages = [
         ("这是定时发送的消息", "wxid_92woynyarvut21", ''),
         (get_coin_rank, "wxid_92woynyarvut21", ''),
