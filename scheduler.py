@@ -78,20 +78,24 @@ def schedule_messages(send_message_func):
     """
     定时发送消息的函数
     """
-    times = ["08:00", "16:56", "08:45", "08:50", "22:45"]
+    times = ["04:20", "05:00", "08:45", "08:50", "22:45"]
     messages = [
-        ("这是定时发送的消息", "wxid_92woynyarvut21", ''),
+        (get_coin_rank, "wxid_92woynyarvut21", ''),
         (get_coin_rank, "wxid_92woynyarvut21", ''),
         ("[Sun]GM", os.getenv("闲聊区@编程小白社"), ''),
         (get_coin_rank, os.getenv("闲聊区@编程小白社"), ''),
         ("[Moon]GN", os.getenv("闲聊区@编程小白社"), '')
     ]
     
-    for time_str, (message, chat_id, additional) in zip(times, messages):
-        if callable(message):
-            schedule.every().day.at(time_str).do(send_message_func, message(), chat_id, additional)
+    def create_task(message_func, chat_id, additional):
+        if callable(message_func):
+            return lambda: send_message_func(message_func(), chat_id, additional)
         else:
-            schedule.every().day.at(time_str).do(send_message_func, message, chat_id, additional)
+            return lambda: send_message_func(message_func, chat_id, additional)
+
+    for time_str, (message_func, chat_id, additional) in zip(times, messages):
+        task = create_task(message_func, chat_id, additional)
+        schedule.every().day.at(time_str).do(task)
     
     while True:
         try:
