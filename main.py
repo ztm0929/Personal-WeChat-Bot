@@ -3,7 +3,7 @@ from queue import Empty
 from threading import Thread
 import logging
 import asyncio
-from message_processor import processMsg, start_scheduler, get_wcf_instance
+from modules.message_processor import processMsg, start_scheduler, get_wcf_instance
 
 # 配置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
