@@ -78,7 +78,7 @@ def processMsg(msg: WxMsg):
         #             logging.error(f"请求失败: {e}")
 
 def start_scheduler():
-    import scheduler
+    import modules.scheduler as scheduler
     scheduler.start_scheduler(send_text_message)
 
 def get_wcf_instance():
