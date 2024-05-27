@@ -10,6 +10,9 @@ class CoinRank:
         self.http = self._init_http_session()
     
     def _init_http_session(self):
+        """
+        设置重试策略，遇到临时的服务器错误时自动重试，提高代码健壮性和可用性
+        """
         retry_strategy = Retry(
             total=3,
             backoff_factor=1,
@@ -20,7 +23,10 @@ class CoinRank:
         http.mount("https://", adapter)
         return http
     
-    def get_coin_rank(self):
+    def get_coin_rank(self):  
+        """
+        获取加密货币的数据并返回格式化的排名信息
+        """
         url = (
             'https://api.coingecko.com/api/v3/coins/markets'
             '?vs_currency=cny'
@@ -53,8 +59,8 @@ class CoinRank:
     
         last_updated_str = last_updated.strftime("%Y-%m-%d %H:%M:%S")
         txt = (
-            f"📈 Crypto市值排名：\n"
-            f"币种-当前汇率-涨跌\n"
+            f"📈 Crypto 市值排名：\n"
+            f"币种-当前汇率-涨跌\n\n"
             f"{'\n'.join(formatted_res)}\n\n"
             f"🕒 更新时间：\n"
             f"{last_updated_str} UTC+8\n\n"

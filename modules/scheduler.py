@@ -3,6 +3,7 @@ import time
 import logging
 from threading import Thread
 from .api.coin_rank import CoinRank
+from .api.github_trending import GitHubTrending
 from dotenv import load_dotenv
 import os
 
@@ -11,15 +12,17 @@ load_dotenv()
 
 def schedule_messages(send_message_func):
     coin_rank = CoinRank(api_key=os.getenv("COINGECKO_API_KEY"))
+    github_trending = GitHubTrending()
 
     """
     定时发送消息的函数
     """
-    times = ["04:00", "05:00", "08:45", "08:50", "22:45"]
+    times = ["04:00", "06:26", "08:45", "12:15", "08:50", "22:45"]
     messages = [
         (coin_rank.get_coin_rank, "wxid_92woynyarvut21", ''),
-        (coin_rank.get_coin_rank, "wxid_92woynyarvut21", ''),
+        (github_trending.get_trending_repositories, "wxid_92woynyarvut21", ''),
         ("[Sun]GM", os.getenv("闲聊区@编程小白社"), ''),
+        (github_trending.get_trending_repositories, os.getenv("闲聊区@编程小白社"), ''),
         (coin_rank.get_coin_rank, os.getenv("闲聊区@编程小白社"), ''),
         ("[Moon]GN", os.getenv("闲聊区@编程小白社"), '')
     ]
