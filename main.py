@@ -3,7 +3,7 @@ from queue import Empty
 from threading import Thread
 import logging
 import asyncio
-from modules.message_processor import processMsg, start_scheduler, get_wcf_instance
+from modules.message_processor import process_msg, start_scheduler, get_wcf_instance
 
 # 配置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,7 +26,7 @@ def enableReceivingMsg():
         while wcf.is_receiving_msg():  # 判断是否正在接收消息
             try:
                 msg = wcf.get_msg()  # 获取接收到的消息
-                processMsg(msg)  # 处理消息
+                process_msg(msg)  # 处理消息
             except Empty:  # 处理消息队列为空的情况
                 continue  # 继续下一次循环
             except Exception as e:  # 捕获其他所有异常
