@@ -101,7 +101,7 @@ def handle_at_message(msg: WxMsg, room_id: str, sender_name: str):
                 result_dict = json.loads(result)
                 ai_response = result_dict["Choices"][0]["Message"]["Content"]
                 send_text_message(
-                    msg=f"@{sender_name} {ai_response}\n\nAI会犯错，最终解释权归@天明所有\n本次请求模型：hunyuan-standard\n本次请求耗时: {elapsed_time:.2f} 秒",
+                    msg=f"@{sender_name} {ai_response}\n\nAI会犯错，最终解释权归@天明所有\n本次请求模型：hunyuan-standard\n本次请求耗时: {elapsed_time:.2f} 秒\nhttps://hunyuan.tencent.com",
                     receiver=room_id,
                     aters=msg.sender
                 )
