@@ -6,6 +6,7 @@ from .api.coin_rank import CoinRank
 from .api.github_trending import GitHubTrending
 from dotenv import load_dotenv
 import os
+from .rss import push_updates
 
 
 load_dotenv()
@@ -17,7 +18,7 @@ def schedule_messages(send_message_func):
     """
     定时发送消息的函数
     """
-    times = ["07:00", "06:45", "08:45", "12:15", "08:50", "22:45"]
+    times = ["04:00", "06:26", "08:45", "12:15", "08:50", "22:45"]
     messages = [
         (coin_rank.get_coin_rank, "wxid_92woynyarvut21", ''),
         (github_trending.get_trending_repositories, "wxid_92woynyarvut21", ''),
@@ -37,6 +38,10 @@ def schedule_messages(send_message_func):
         task = create_task(message_func, chat_id, additional)
         schedule.every().day.at(time_str).do(task)
     
+    rss_times = ["10:07", "10:10", "10:30"]
+    for time_str in rss_times:
+        schedule.every().day.at(time_str).do(lambda: send_message_func(push_updates(), "wxid_92woynyarvut21", '') )
+
     while True:
         try:
             schedule.run_pending()
