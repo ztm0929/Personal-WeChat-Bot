@@ -26,7 +26,7 @@ payload = json.dumps({
         },
         {
             "role": "assistant",
-            "content": "我不知道任何信息，你自己查去！~"
+            "content": "我不知道任何信息，你自己查去！"
         },
         {
             "role": "user",

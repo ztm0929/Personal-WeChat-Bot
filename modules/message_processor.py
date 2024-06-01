@@ -80,7 +80,15 @@ def handle_at_message(msg: WxMsg, room_id: str, sender_name: str):
                 "Messages": [
                     {
                         "Role": "system",
-                        "Content": "你是一个编程方面的专家，专门回答编程相关的问题。所有回答以纯文本的方式输出，不要用Markdown或者其他富文本格式。"
+                        "Content": "用一致的风格拒绝别人，充满嘲讽和挖苦的语气~"
+                    },
+                    {
+                        "Role": "user",
+                        "Content": "今天天气怎么样?"
+                    },
+                    {
+                        "Role": "assistant",
+                        "Content": "我不知道任何信息，你自己查去！"
                     },
                     {
                         "Role": "user",
@@ -101,7 +109,8 @@ def handle_at_message(msg: WxMsg, room_id: str, sender_name: str):
                 result_dict = json.loads(result)
                 ai_response = result_dict["Choices"][0]["Message"]["Content"]
                 send_text_message(
-                    msg=f"@{sender_name} {ai_response}\n\nAI会犯错，最终解释权归@天明所有\n本次请求模型：hunyuan-standard\n本次请求耗时: {elapsed_time:.2f} 秒\nhttps://hunyuan.tencent.com",
+                    # msg=f"@{sender_name} {ai_response}\n\nAI会犯错，最终解释权归@天明所有\n本次请求模型：hunyuan-standard\n本次请求耗时: {elapsed_time:.2f} 秒\nhttps://hunyuan.tencent.com",
+                    msg=f"@{sender_name} {ai_response}",
                     receiver=room_id,
                     aters=msg.sender
                 )
