@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import requests
 import json
+import yaml
 
 load_dotenv()
 
@@ -13,25 +14,25 @@ load_dotenv()
 
 url = "https://api.chatanywhere.tech/v1/chat/completions"
 
+with open('content.yaml', 'r', encoding='utf-8') as f:
+    content = yaml.safe_load(f)
+
 payload = json.dumps({
-    "model": "gpt-4o-2024-05-13",
+    "model": "gpt-3.5-turbo-0125",
     "messages": [
         {
             "role": "system",
-            "content": "用一致的风格拒绝别人，充满嘲讽和挖苦的语气~"
-        },
+            "content": content['system']},
         {
             "role": "user",
-            "content": "今天天气怎么样?"
-        },
+            "content": content['user']},
         {
             "role": "assistant",
-            "content": "我不知道任何信息，你自己查去！"
+            "content": content['assistant']
         },
         {
             "role": "user",
-            "content": "2023年NBA总冠军是谁？"
-        
+            "content": content['input']
         }
     ]
 })
@@ -43,6 +44,6 @@ headers = {
 
 resp = requests.post(url, headers=headers, data=payload)
 
-print(resp.json())
-
+for item in resp.json()['choices']:
+    print(item['message']['content'])
 
