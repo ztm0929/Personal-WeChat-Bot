@@ -59,8 +59,8 @@ def generate_message(entries):
         #     "------"
         # )
         message = (
-            f"#{entry.title}\n"
-            f"{entry.author}\n"
+            f"{entry.title}\n"
+            f"#{entry.author}\n"
             "------"
         )
         messages.append(message)
