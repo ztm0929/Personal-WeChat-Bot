@@ -6,7 +6,7 @@
 - [ ] 汇率提醒
   - [x] 文字版
   - [ ] 图表版
-- [ ] GtiHub Trending
+- [x] GtiHub Trending
 - [ ] 群统计
   - [ ] 昨日消息数量
   - [ ] 昨日主题词云
@@ -14,4 +14,5 @@
 - [ ] GPT-4o
 
 # 感谢
-[@lich0821](https://github.com/lich0821/WeChatFerry)
+[@lich0821](https://github.com/lich0821/WeChatFerry)  
+[@tom-snow](https://github.com/tom-snow/wechat-windows-versions)
