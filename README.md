@@ -1,7 +1,8 @@
 # Personal-WeChat-Bot
+
 自用微信机器人，主要用于群聊互动
 
-# TODO
+## TODO
 
 - [ ] 汇率提醒
   - [x] 文字版
@@ -13,6 +14,7 @@
   - [ ] 昨日摸鱼大王
 - [ ] GPT-4o
 
-# 感谢
+## 感谢
+
 [@lich0821](https://github.com/lich0821/WeChatFerry)  
 [@tom-snow](https://github.com/tom-snow/wechat-windows-versions)

@@ -11,7 +11,7 @@ from .rss import push_updates
 
 load_dotenv()
 
-def schedule_messages(send_message_func):
+def schedule_messages(send_text_func, send_rich_text_func):
     coin_rank = CoinRank(api_key=os.getenv("COINGECKO_API_KEY"))
     github_trending = GitHubTrending()
 
@@ -30,9 +30,9 @@ def schedule_messages(send_message_func):
     
     def create_task(message_func, chat_id, additional):
         if callable(message_func):
-            return lambda: send_message_func(message_func(), chat_id, additional)
+            return lambda: send_text_func(message_func(), chat_id, additional)
         else:
-            return lambda: send_message_func(message_func, chat_id, additional)
+            return lambda: send_text_func(message_func, chat_id, additional)
 
     for time_str, (message_func, chat_id, additional) in zip(times, messages):
         task = create_task(message_func, chat_id, additional)
@@ -40,7 +40,10 @@ def schedule_messages(send_message_func):
     
     rss_times = ["12:10", "18:10", "22:10"]
     for time_str in rss_times:
-        schedule.every().day.at(time_str).do(lambda: send_message_func(push_updates(), "50453454101@chatroom", '') )
+        schedule.every().day.at(time_str).do(lambda: send_text_func(push_updates(), "50453454101@chatroom", '') )
+
+    schedule.every(30).seconds.do(lambda: send_text_func("Hello, World!", "wxid_92woynyarvut21", ''))
+    schedule.every(30).seconds.do(lambda: send_rich_text_func("Test", "", "Test", "Test", "https://www.google.com", "", os.getenv("测试专用")) )
 
     while True:
         try:
@@ -51,8 +54,8 @@ def schedule_messages(send_message_func):
             logging.info("程序将在60秒后重试。")
             time.sleep(60)
 
-def start_scheduler(send_message_func):
+def start_scheduler(send_text_func, send_rich_text_func):
     """
     启动定时任务调度器
     """
-    Thread(target=schedule_messages, args=(send_message_func,), name="PeriodicMessageThread", daemon=True).start()
+    Thread(target=schedule_messages, args=(send_text_func, send_rich_text_func), name="PeriodicMessageThread", daemon=True).start()

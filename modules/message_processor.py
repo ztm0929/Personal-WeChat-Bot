@@ -24,6 +24,9 @@ wcf = Wcf()
 def send_text_message(msg: str, receiver: str, aters: str = '') -> int:
     return wcf.send_text(msg, receiver, aters)
 
+def send_rich_text_message(name: str, account: str, title: str, digest: str, url: str, thumburl: str, receiver: str) -> int:
+    return wcf.send_rich_text(name, account, title, digest, url, thumburl, receiver)
+
 def get_room_name_by_id(room_id):
     contacts = wcf.get_contacts()
     for contact in contacts:
@@ -124,7 +127,7 @@ def handle_at_message(msg: WxMsg, room_id: str, sender_name: str):
 
 def start_scheduler():
     import modules.scheduler
-    modules.scheduler.start_scheduler(send_text_message)
+    modules.scheduler.start_scheduler(send_text_message, send_rich_text_message)
 
 def get_wcf_instance():
     return wcf
