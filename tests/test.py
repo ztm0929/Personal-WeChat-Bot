@@ -6,7 +6,7 @@ import re
 import time
 import feedparser
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from wcferry import Wcf
 
 # Load environment variables from .env file
@@ -84,16 +84,41 @@ def send_text(entries):
     except Exception as e:
         logging.error(f"Error occurred when sending text: {e}")
 
+def read_last_push_time():
+    if os.path.exists(LOG_FILE_PATH):
+        with open(LOG_FILE_PATH, 'r') as file:
+            last_push_time_str = file.read().strip()
+            if last_push_time_str:
+                return datetime.fromisoformat(last_push_time_str)
+    return None
+
+def write_last_push_time(time):
+    with open(LOG_FILE_PATH, 'w') as file:
+        file.write(time.isoformat())
+
 def main():
+    last_push_time = read_last_push_time()
     feed_entries = feedparser.parse(RSS_URL).entries
-    entries = [{'title': entry.title, 'link': entry.link, 'author': entry.author} for entry in feed_entries]
-
-    for entry in entries:
-        logging.info(f"Processing entry: {entry['title']} - {entry['link']}")
-        send_rich_text(entry)
-
-    time.sleep(3)
-    send_text(entries)
+    new_entries = []
+    
+    for entry in feed_entries:
+        entry_published = datetime.strptime(entry.updated, "%Y-%m-%dT%H:%M:%S.%fZ") + TIMEZONE_OFFSET
+        if last_push_time is None or entry_published > last_push_time:
+            new_entries.append({'title': entry.title, 'link': entry.link, 'author': entry.author})
+    
+    if new_entries:
+        for entry in new_entries:
+            logging.info(f"Processing entry: {entry['title']} - {entry['link']}")
+            send_rich_text(entry)
+        
+        time.sleep(3)
+        send_text(new_entries)
+        
+        # Update last push time to the latest entry's publish time
+        latest_push_time = max(datetime.strptime(entry.updated, "%Y-%m-%dT%H:%M:%S.%fZ") + TIMEZONE_OFFSET for entry in feed_entries)
+        write_last_push_time(latest_push_time)
+    else:
+        logging.info("No new entries to process")
 
 if __name__ == "__main__":
     main()
