@@ -7,6 +7,7 @@ from .api.github_trending import GitHubTrending
 from dotenv import load_dotenv
 import os
 from .rss import push_updates
+from tests import test
 
 
 load_dotenv()
@@ -38,12 +39,15 @@ def schedule_messages(send_text_func, send_rich_text_func):
         task = create_task(message_func, chat_id, additional)
         schedule.every().day.at(time_str).do(task)
     
-    rss_times = ["12:10", "18:10", "22:10"]
-    for time_str in rss_times:
-        schedule.every().day.at(time_str).do(lambda: send_text_func(push_updates(), "50453454101@chatroom", '') )
+    # rss_times = ["12:10", "18:10", "22:10"]
+    # for time_str in rss_times:
+    #     schedule.every().day.at(time_str).do(lambda: send_text_func(push_updates(), "50453454101@chatroom", '') )
 
-    schedule.every(30).seconds.do(lambda: send_text_func("Hello, World!", "wxid_92woynyarvut21", ''))
-    schedule.every(30).seconds.do(lambda: send_rich_text_func("Test", "", "Test", "Test", "https://www.google.com", "", os.getenv("测试专用")) )
+    # schedule.every(30).seconds.do(lambda: send_text_func("Hello, World!", "wxid_92woynyarvut21", ''))
+    test_times = ["12:10", "18:10", "22:10"]
+    for test_time in test_times:
+        schedule.every().day.at(test_time).do(test.main)
+
 
     while True:
         try:

@@ -8,12 +8,15 @@ import feedparser
 import logging
 from datetime import datetime, timedelta
 from wcferry import Wcf
+from modules.message_processor import process_msg, start_scheduler, get_wcf_instance
+
+# 获取Wcf实例，用于与微信通信
+wcf = get_wcf_instance()
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Initialize Wcf instance
-wcf = Wcf()
 
 # Constants
 RSS_URL = "http://localhost:4000/feeds/all.atom"
@@ -81,7 +84,7 @@ def send_text(entries, last_push_time):
     last_push_time_str = last_push_time.strftime("%H:%M") if last_push_time else "未知时间"
     message = f"{last_push_time_str}到现在的新内容：\n（未作AI筛选）\n" + "\n".join(messages)
     try:
-        wcf.send_text(message, os.getenv("测试专用"), "")
+        wcf.send_text(message, os.getenv("转发测试"), "")
     except Exception as e:
         logging.error(f"Error occurred when sending text: {e}")
 
@@ -120,6 +123,7 @@ def main():
         write_last_push_time(latest_push_time)
     else:
         logging.info("No new entries to process")
+        wcf.send_text("暂无新内容，无需推送", os.getenv("转发测试"), "")
 
 if __name__ == "__main__":
     main()
