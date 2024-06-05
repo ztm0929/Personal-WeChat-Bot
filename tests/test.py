@@ -9,20 +9,22 @@ import logging
 from datetime import timedelta
 from wcferry import Wcf
 
+# Load environment variables from .env file
 load_dotenv()
 
+# Initialize Wcf instance
 wcf = Wcf()
 
+# Constants
 RSS_URL = "http://localhost:4000/feeds/all.atom"
 LOG_FILE_PATH = os.path.join('logs', 'last_push_time.txt')
 TIMEZONE_OFFSET = timedelta(hours=8)
 
+# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def extract_data_from_script(scripts):
-    match_cdn = None
-    match_username = None
-    match_msg_desc = ""
+    match_cdn, match_username, match_msg_desc = None, None, None
     for script in scripts:
         if 'var cdn_url_1_1' in script.text:
             match_cdn = re.search(r'var cdn_url_1_1 = "(.*)";', script.text)
@@ -37,9 +39,12 @@ def extract_data_from_script(scripts):
 def send_rich_text(entry):
     url = entry['link']
     max_retries = 3
+    match_cdn, match_username, match_msg_desc = None, None, None
+
     for _ in range(max_retries):
         try:
             response = requests.get(url)
+            response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             scripts = soup.find_all('script')
             match_cdn, match_username, match_msg_desc = extract_data_from_script(scripts)
@@ -47,14 +52,13 @@ def send_rich_text(entry):
                 break
         except requests.exceptions.RequestException as e:
             logging.error(f"Error occurred when requesting URL: {e}")
-            # time.sleep(1)
+            time.sleep(1)
+
     if match_cdn and match_username and match_msg_desc:
         cdn_url_1_1 = match_cdn.group(1)
         username = match_username.group(1)
         msg_desc = match_msg_desc.group(1)
-        print(cdn_url_1_1)
-        print(username)
-        print(msg_desc)
+        logging.info(f"CDN URL: {cdn_url_1_1}, Username: {username}, Message Description: {msg_desc}")
         try:
             wcf.send_rich_text(
                 name=entry['author'],
@@ -63,18 +67,33 @@ def send_rich_text(entry):
                 digest=msg_desc,
                 url=url,
                 thumburl=cdn_url_1_1,
-                receiver=os.getenv("转发测试")
+                receiver=os.getenv("测试专用")
             )
         except Exception as e:
             logging.error(f"Error occurred when sending rich text: {e}")
-    # 否则，打印错误信息
     else:
-        print("没有成功发送消息")
+        logging.error("Failed to extract necessary data from the script")
 
-feed_entries = feedparser.parse(RSS_URL).entries
-entries = [{'title': entry.title, 'link': entry.link, 'author': entry.author} for entry in feed_entries]
+def send_text(entries):
+    messages = []
+    for entry in entries:
+        messages.append(f"{entry['title']}\n#{entry['author']}\n------")
+    message = "\n".join(messages)
+    try:
+        wcf.send_text(message, os.getenv("测试专用"), "")
+    except Exception as e:
+        logging.error(f"Error occurred when sending text: {e}")
 
-for entry in entries:
-    print(entry['title'])
-    print(entry['link'])
-    send_rich_text(entry)
+def main():
+    feed_entries = feedparser.parse(RSS_URL).entries
+    entries = [{'title': entry.title, 'link': entry.link, 'author': entry.author} for entry in feed_entries]
+
+    for entry in entries:
+        logging.info(f"Processing entry: {entry['title']} - {entry['link']}")
+        send_rich_text(entry)
+
+    time.sleep(3)
+    send_text(entries)
+
+if __name__ == "__main__":
+    main()
