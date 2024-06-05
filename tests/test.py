@@ -70,7 +70,7 @@ def send_rich_text(entry):
                 digest=msg_desc,
                 url=url,
                 thumburl=cdn_url_1_1,
-                receiver=os.getenv("测试专用")
+                receiver=os.getenv("转发测试")
             )
         except Exception as e:
             logging.error(f"Error occurred when sending rich text: {e}")
@@ -104,14 +104,22 @@ def main():
     last_push_time = read_last_push_time()
     feed_entries = feedparser.parse(RSS_URL).entries
     new_entries = []
+    new_entries_A = [] # 用于存储包含“招聘”或“实习”的文章
+    new_entries_B = [] # 用于存储不包含“招聘”或“实习”的文章
     
     for entry in feed_entries:
         entry_published = datetime.strptime(entry.updated, "%Y-%m-%dT%H:%M:%S.%fZ") + TIMEZONE_OFFSET
         if last_push_time is None or entry_published > last_push_time:
-            new_entries.append({'title': entry.title, 'link': entry.link, 'author': entry.author})
+            if "招" in entry.title or "实习" in entry.title:
+                new_entries_A.append({'title': entry.title, 'link': entry.link, 'author': entry.author})
+            else:
+                new_entries_B.append({'title': entry.title, 'link': entry.link, 'author': entry.author})
+            
+            # 将A组和B组的文章合并，中间通过一条分割线分隔
+            new_entries = new_entries_A + [{'title': '------', 'link': '', 'author': ' 其他可能跟招聘/实习不相关的文章'}] + new_entries_B
     
     if new_entries:
-        for entry in new_entries:
+        for entry in new_entries_A:
             logging.info(f"Processing entry: {entry['title']} - {entry['link']}")
             send_rich_text(entry)
         
