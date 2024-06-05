@@ -74,11 +74,12 @@ def send_rich_text(entry):
     else:
         logging.error("Failed to extract necessary data from the script")
 
-def send_text(entries):
+def send_text(entries, last_push_time):
     messages = []
     for entry in entries:
         messages.append(f"{entry['title']}\n#{entry['author']}\n------")
-    message = "\n".join(messages)
+    last_push_time_str = last_push_time.strftime("%H:%M") if last_push_time else "未知时间"
+    message = f"{last_push_time_str}到现在的新内容：\n（未作AI筛选）\n" + "\n".join(messages)
     try:
         wcf.send_text(message, os.getenv("测试专用"), "")
     except Exception as e:
@@ -112,7 +113,7 @@ def main():
             send_rich_text(entry)
         
         time.sleep(3)
-        send_text(new_entries)
+        send_text(new_entries, last_push_time)
         
         # Update last push time to the latest entry's publish time
         latest_push_time = max(datetime.strptime(entry.updated, "%Y-%m-%dT%H:%M:%S.%fZ") + TIMEZONE_OFFSET for entry in feed_entries)
