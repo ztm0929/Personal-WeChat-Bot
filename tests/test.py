@@ -8,15 +8,16 @@ import feedparser
 import logging
 from datetime import datetime, timedelta
 from wcferry import Wcf
-from modules.message_processor import process_msg, start_scheduler, get_wcf_instance
+# from modules.message_processor import process_msg, start_scheduler, get_wcf_instance
+import yaml
+import json
 
 # 获取Wcf实例，用于与微信通信
-wcf = get_wcf_instance()
+# wcf = get_wcf_instance()
+wcf = Wcf()
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Initialize Wcf instance
 
 # Constants
 RSS_URL = "http://localhost:4000/feeds/all.atom"
@@ -70,7 +71,7 @@ def send_rich_text(entry):
                 digest=msg_desc,
                 url=url,
                 thumburl=cdn_url_1_1,
-                receiver=os.getenv("转发测试")
+                receiver=os.getenv("测试专用")
             )
         except Exception as e:
             logging.error(f"Error occurred when sending rich text: {e}")
@@ -80,11 +81,12 @@ def send_rich_text(entry):
 def send_text(entries, last_push_time):
     messages = []
     for entry in entries:
-        messages.append(f"{entry['title']}\n#{entry['author']}\n------")
+        print(f"assistant_reply: {entry['assistant_reply']}")
+        messages.append(f"{entry['title']}\n#{entry['author']}\n{entry['assistant_reply']}\n------")
     last_push_time_str = last_push_time.strftime("%H:%M") if last_push_time else "未知时间"
-    message = f"{last_push_time_str}到现在的新内容：\n（未作AI筛选）\n" + "\n".join(messages)
+    message = f"{last_push_time_str}到现在的新内容：\n（AI初筛）\n" + "\n".join(messages)
     try:
-        wcf.send_text(message, os.getenv("转发测试"), "")
+        wcf.send_text(message, os.getenv("测试专用"), "")
     except Exception as e:
         logging.error(f"Error occurred when sending text: {e}")
 
@@ -103,22 +105,64 @@ def write_last_push_time(time):
 def main():
     last_push_time = read_last_push_time()
     feed_entries = feedparser.parse(RSS_URL).entries
-    new_entries = []
-    new_entries_A = [] # 用于存储包含“招聘”或“实习”的文章
-    new_entries_B = [] # 用于存储不包含“招聘”或“实习”的文章
+    new_entries_A = [] # 用于存储包含“招”或“实习”的文章
+    new_entries_B = [] # 用于存储不包含“招”或“实习”的文章
+
+    url = "https://api.chatanywhere.tech/v1/chat/completions"
+    with open('tests/content.yaml', 'r', encoding='utf-8') as f:
+        content = yaml.safe_load(f)
     
     for entry in feed_entries:
         entry_published = datetime.strptime(entry.updated, "%Y-%m-%dT%H:%M:%S.%fZ") + TIMEZONE_OFFSET
         if last_push_time is None or entry_published > last_push_time:
-            if "招" in entry.title or "实习" in entry.title:
-                new_entries_A.append({'title': entry.title, 'link': entry.link, 'author': entry.author})
+            payload = json.dumps({
+                "model": "gpt-3.5-turbo-0125",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": content['system']
+                    },
+                    {
+                        "role": "user",
+                        "content": content['user']
+                    },
+                    {
+                        "role": "assistant",
+                        "content": content['assistant']
+                    },
+                    {
+                        "role": "user",
+                        "content": entry.title
+                    }
+                ]
+            })
+
+            headers = {
+                'Authorization': f"Bearer {os.getenv('CA_KEY')}",
+                'Content-Type': 'application/json'
+                }
+
+            resp = requests.post(url, headers=headers, data=payload)
+            if resp.status_code != 200:
+                logging.error(f"Failed to send request to ChatAnywhere API: {resp.text}")
+                continue
+            assistant_reply = resp.json()['choices'][0]['message']['content']
+            try:
+                is_recruit = json.loads(assistant_reply)['is_recruit']
+            except (json.JSONDecodeError, KeyError) as e:
+                logging.error(f"Error parsing assistant reply: {assistant_reply}")
+                continue
+            if is_recruit == True:
+                new_entries_A.append({'title': entry.title, 'link': entry.link, 'author': entry.author, 'assistant_reply': json.loads(assistant_reply)['reason']})
+                logging.info(json.loads(assistant_reply)['reason'])
             else:
-                new_entries_B.append({'title': entry.title, 'link': entry.link, 'author': entry.author})
-            
-            # 将A组和B组的文章合并，中间通过一条分割线分隔
-            new_entries = new_entries_A + [{'title': '------', 'link': '', 'author': ' 其他可能跟招聘/实习不相关的文章'}] + new_entries_B
+                new_entries_B.append({'title': entry.title, 'link': entry.link, 'author': entry.author, 'assistant_reply': json.loads(assistant_reply)['reason']})
+                logging.info(json.loads(assistant_reply)['reason'])
+                # print(type(is_recruit))
     
-    if new_entries:
+    new_entries = new_entries_A + [{'title': '', 'link': '', 'author': ' 【其他可能跟招聘/实习不相关的文章】', 'assistant_reply': ''}] + new_entries_B
+    
+    if new_entries_A or new_entries_B:
         for entry in new_entries_A:
             logging.info(f"Processing entry: {entry['title']} - {entry['link']}")
             send_rich_text(entry)
@@ -131,7 +175,7 @@ def main():
         write_last_push_time(latest_push_time)
     else:
         logging.info("No new entries to process")
-        wcf.send_text("暂无新内容，无需推送", os.getenv("转发测试"), "")
+        wcf.send_text("暂无新内容，无需推送", os.getenv("测试专用"), "")
 
 if __name__ == "__main__":
     main()
