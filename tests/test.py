@@ -8,13 +8,13 @@ import feedparser
 import logging
 from datetime import datetime, timedelta
 from wcferry import Wcf
-# from modules.message_processor import process_msg, start_scheduler, get_wcf_instance
+from modules.message_processor import process_msg, start_scheduler, get_wcf_instance
 import yaml
 import json
 
 # 获取Wcf实例，用于与微信通信
-# wcf = get_wcf_instance()
-wcf = Wcf()
+wcf = get_wcf_instance()
+# wcf = Wcf()
 
 # Load environment variables from .env file
 load_dotenv()
@@ -71,7 +71,7 @@ def send_rich_text(entry):
                 digest=msg_desc,
                 url=url,
                 thumburl=cdn_url_1_1,
-                receiver=os.getenv("测试专用")
+                receiver=os.getenv("转发测试")
             )
         except Exception as e:
             logging.error(f"Error occurred when sending rich text: {e}")
@@ -84,9 +84,9 @@ def send_text(entries, last_push_time):
         print(f"assistant_reply: {entry['assistant_reply']}")
         messages.append(f"{entry['title']}\n#{entry['author']}\n{entry['assistant_reply']}\n------")
     last_push_time_str = last_push_time.strftime("%H:%M") if last_push_time else "未知时间"
-    message = f"{last_push_time_str}到现在的新内容：\n（AI初筛）\n" + "\n".join(messages)
+    message = f"（AI初筛）\n" + "\n".join(messages)
     try:
-        wcf.send_text(message, os.getenv("测试专用"), "")
+        wcf.send_text(message, os.getenv("转发测试"), "")
     except Exception as e:
         logging.error(f"Error occurred when sending text: {e}")
 
@@ -175,7 +175,7 @@ def main():
         write_last_push_time(latest_push_time)
     else:
         logging.info("No new entries to process")
-        wcf.send_text("暂无新内容，无需推送", os.getenv("测试专用"), "")
+        wcf.send_text("暂无新内容，无需推送", os.getenv("转发测试"), "")
 
 if __name__ == "__main__":
     main()

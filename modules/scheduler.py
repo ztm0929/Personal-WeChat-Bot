@@ -44,7 +44,7 @@ def schedule_messages(send_text_func, send_rich_text_func):
     #     schedule.every().day.at(time_str).do(lambda: send_text_func(push_updates(), "50453454101@chatroom", '') )
 
     # schedule.every(30).seconds.do(lambda: send_text_func("Hello, World!", "wxid_92woynyarvut21", ''))
-    test_times = ["23:10", "18:10", "22:10"]
+    test_times = ["12:10", "18:10", "22:10"]
     for test_time in test_times:
         schedule.every().day.at(test_time).do(test.main)
 
